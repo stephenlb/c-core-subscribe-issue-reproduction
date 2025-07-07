@@ -21,7 +21,7 @@ A comprehensive reproduction case has been created for the reported PubNub C-Cor
 **Build Command**:
 ```bash
 cc -opubnub_subscribe_bug_reproduction \
-   -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \
+   -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=1 \
    -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
    ../core/samples/pubnub_subscribe_bug_reproduction.c pubnub_sync.a -lpthread
 ```

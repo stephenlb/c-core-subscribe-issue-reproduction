@@ -6,14 +6,17 @@
 #include <errno.h>
 #include <time.h>
 
-// Include the PubNub sync header
-#include "posix/pubnub_sync.h"
+// Include the PubNub sync header - adjust path for root directory build
+#include "pubnub-c-core/posix/pubnub_sync.h"
 
 // For HTTP keep-alive
-#include "core/pubnub_helper.h"
+#include "pubnub-c-core/core/pubnub_helper.h"
+
+// For timers
+#include "pubnub-c-core/core/pubnub_timers.h"
 
 // For logging
-#include "core/pubnub_log.h"
+#include "pubnub-c-core/core/pubnub_log.h"
 
 // Global variables for signal handling
 static volatile int should_exit = 0;

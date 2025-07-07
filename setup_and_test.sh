@@ -61,23 +61,53 @@ download_pubnub() {
 compile_program() {
     echo "Compiling the reproduction program..."
     
-    if [ -f "Makefile" ]; then
-        echo "Using provided Makefile..."
-        make clean || true  # Don't fail if nothing to clean
-        make
-    else
-        echo "Makefile not found, compiling manually..."
-        gcc -std=c99 -Wall -Wextra -g -O0 \
-            -I./pubnub-c-core/core \
-            -I./pubnub-c-core/lib \
-            -I./pubnub-c-core/posix \
-            -DPUBNUB_THREADSAFE=1 \
-            -o pubnub_subscribe_bug_reproduction \
-            pubnub_subscribe_bug_reproduction.c \
-            ./pubnub-c-core/core/*.c \
-            ./pubnub-c-core/posix/*.c \
-            -lpthread
-    fi
+    # Copy the reproduction file to the samples directory with correct includes
+    echo "Copying reproduction file to PubNub samples directory..."
+    cp pubnub_subscribe_bug_reproduction.c pubnub-c-core/core/samples/
+    
+    # Fix the includes for the samples directory structure
+    echo "Fixing include paths for samples directory..."
+    sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "pubnub_sync.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    
+    # Fix the log level setting function call
+    echo "Fixing log level function call..."
+    sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    
+    # Build using PubNub's build system
+    echo "Building PubNub library..."
+    cd pubnub-c-core/posix
+    make -f posix.mk pubnub_sync_sample
+    
+    echo "Compiling reproduction program..."
+    cc -opubnub_subscribe_bug_reproduction -Wall \
+       -I.. -I. -I../lib/base64 -I../posix \
+       -D PUBNUB_CRYPTO_API=0 \
+       -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
+       -D PUBNUB_ONLY_PUBSUB_API=0 \
+       -D PUBNUB_PROXY_API=1 \
+       -D PUBNUB_RECEIVE_GZIP_RESPONSE=1 \
+       -D PUBNUB_THREADSAFE=1 \
+       -D PUBNUB_USE_ACTIONS_API=1 \
+       -D PUBNUB_USE_ADVANCED_HISTORY=1 \
+       -D PUBNUB_USE_AUTO_HEARTBEAT=1 \
+       -D PUBNUB_USE_FETCH_HISTORY=1 \
+       -D PUBNUB_USE_GRANT_TOKEN_API=0 \
+       -D PUBNUB_USE_GZIP_COMPRESSION=1 \
+       -D PUBNUB_USE_IPV6=1 \
+       -D PUBNUB_USE_OBJECTS_API=1 \
+       -D PUBNUB_USE_RETRY_CONFIGURATION=0 \
+       -D PUBNUB_USE_REVOKE_TOKEN_API=0 \
+       -D PUBNUB_USE_SSL=0 \
+       -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \
+       -D PUBNUB_USE_SUBSCRIBE_V2=1 \
+       -D PUBNUB_USE_LOG_CALLBACK=0 \
+       ../core/samples/pubnub_subscribe_bug_reproduction.c pubnub_sync.a -lpthread
+       
+    cd ../..
     
     echo "✓ Program compiled successfully"
     echo
@@ -93,7 +123,14 @@ run_test() {
     echo "Starting test in 3 seconds..."
     sleep 3
     
-    ./pubnub_subscribe_bug_reproduction
+    if [ -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction" ]; then
+        cd pubnub-c-core/posix
+        ./pubnub_subscribe_bug_reproduction
+        cd ../..
+    else
+        echo "ERROR: Reproduction program not found. Compilation may have failed."
+        exit 1
+    fi
 }
 
 # Main execution
@@ -105,7 +142,7 @@ main() {
     echo "Setup completed successfully!"
     echo
     echo "To run the reproduction test:"
-    echo "  ./pubnub_subscribe_bug_reproduction"
+    echo "  cd pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction"
     echo
     echo "To run with the setup script:"
     echo "  $0 --run"
@@ -120,7 +157,7 @@ main() {
 # Parse command line arguments
 case "${1:-}" in
     --run)
-        if [ ! -f "pubnub_subscribe_bug_reproduction" ]; then
+        if [ ! -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction" ]; then
             echo "Program not found. Running full setup first..."
             main --run
         else
