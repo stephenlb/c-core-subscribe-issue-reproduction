@@ -1,11 +1,10 @@
 # PubNub C-Core v5.1.1 Subscribe Bug - Reproduction Summary
 
-## Executive Summary
+## Summary
 
-✅ **REPRODUCTION CASE CREATED SUCCESSFULLY**  
-A comprehensive reproduction case has been created for the reported PubNub C-Core v5.1.1 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels.
+A reproduction case has been created for the reported PubNub C-Core v5.1.1 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels.
 
-**Current Status**: The reproduction program runs successfully without hanging in the test environment, suggesting the bug may be configuration-specific, environment-dependent, or requires specific conditions to trigger.
+**Current Status**: The reproduction program runs successfully without hanging, suggesting the bug may be configuration-specific, environment-dependent, or requires specific conditions to trigger.
 
 ## Test Environment
 
@@ -101,7 +100,7 @@ pubnub_get(ctx);                                   // ✅
 
 ## Deliverables
 
-### Files Created
+### Files
 1. **`pubnub_subscribe_bug_reproduction.c`**: Complete reproduction program
 2. **`setup_and_test.sh`**: Automated setup and compilation script
 3. **`Makefile`**: Build configuration with all necessary PubNub source files
@@ -116,27 +115,3 @@ pubnub_get(ctx);                                   // ✅
 # Run the reproduction test
 ./setup_and_test.sh --run
 ```
-
-## Recommendations
-
-### For Bug Investigation
-1. **Test in User's Environment**: Run the reproduction case in the exact environment where the bug occurs
-2. **Configuration Comparison**: Compare build flags and compile-time options
-3. **Network Analysis**: Test under different network conditions
-4. **Threading Analysis**: Examine threading model and race conditions
-
-### For PubNub Development Team
-1. **Platform Testing**: Test across different platforms (Linux, embedded systems)
-2. **Regression Testing**: Compare behavior between v5.0.3 and v5.1.1
-3. **Configuration Testing**: Test different build configurations and preprocessor definitions
-4. **Documentation**: Update documentation regarding known issues and workarounds
-
-## Conclusion
-
-**✅ Reproduction case successfully created and tested**  
-**⚠️ Bug not reproduced in current test environment**  
-**🔍 Suggests environment-specific or configuration-specific issue**
-
-The reproduction program is ready for deployment and testing in the user's specific environment where the bug was originally observed. The comprehensive logging and error handling will help identify the exact point of failure when the bug is triggered.
-
-**Next Steps**: Deploy the reproduction case in the user's environment to capture the hanging behavior and detailed trace logs for further analysis.

@@ -18,6 +18,9 @@
 // For logging
 #include "pubnub-c-core/core/pubnub_log.h"
 
+// For HTTP response access
+#include "pubnub-c-core/core/pubnub_coreapi.h"
+
 // Global variables for signal handling
 static volatile int should_exit = 0;
 static pubnub_t *global_ctx = NULL;
@@ -126,6 +129,17 @@ int main() {
             print_timestamp();
             printf("✓ Subscribe completed successfully\n");
             
+            // Print full HTTP response body from subscribe
+            print_timestamp();
+            printf("=== SUBSCRIBE HTTP RESPONSE BODY ===\n");
+            const char *response_body = pubnub_get_http_content(ctx);
+            if (response_body != NULL) {
+                printf("Response body: %s\n", response_body);
+            } else {
+                printf("No response body available\n");
+            }
+            printf("=== END SUBSCRIBE HTTP RESPONSE BODY ===\n");
+            
             // Step 7: pubnub_get
             print_timestamp();
             printf("Step 7: Retrieving messages with pubnub_get...\n");
@@ -195,6 +209,17 @@ int main() {
         if (pbresult == PNR_OK) {
             print_timestamp();
             printf("✓ Publish completed successfully - connection is working\n");
+            
+            // Print full HTTP response body from publish
+            print_timestamp();
+            printf("=== PUBLISH HTTP RESPONSE BODY ===\n");
+            const char *response_body = pubnub_get_http_content(ctx);
+            if (response_body != NULL) {
+                printf("Response body: %s\n", response_body);
+            } else {
+                printf("No response body available\n");
+            }
+            printf("=== END PUBLISH HTTP RESPONSE BODY ===\n");
         } else {
             print_timestamp();
             printf("ERROR: Publish failed with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
