@@ -22,8 +22,9 @@ check_dependencies() {
         exit 1
     fi
     
-    if ! command -v git &> /dev/null; then
-        echo "WARNING: git not found. Will try to use wget instead."
+    if ! command -v wget &> /dev/null && ! command -v curl &> /dev/null; then
+        echo "ERROR: Neither wget nor curl found. Please install one of them."
+        exit 1
     fi
     
     echo "✓ Dependencies check passed"
@@ -32,28 +33,28 @@ check_dependencies() {
 
 # Download PubNub C-Core
 download_pubnub() {
-    echo "Downloading PubNub C-Core v5.1.0..."
+    echo "Downloading PubNub C-Core v5.1.1..."
     
     if [ -d "pubnub-c-core" ]; then
         echo "pubnub-c-core directory already exists. Removing..."
         rm -rf pubnub-c-core
     fi
     
-    if command -v git &> /dev/null; then
-        echo "Using git to clone repository..."
-        git clone https://github.com/pubnub/c-core.git pubnub-c-core
-        cd pubnub-c-core
-        git checkout v5.1.0
-        cd ..
+    echo "Downloading tarball..."
+    if command -v wget &> /dev/null; then
+        wget https://github.com/pubnub/c-core/archive/refs/tags/v5.1.1.tar.gz
+    elif command -v curl &> /dev/null; then
+        curl -L -o v5.1.1.tar.gz https://github.com/pubnub/c-core/archive/refs/tags/v5.1.1.tar.gz
     else
-        echo "Using wget to download tarball..."
-        wget https://github.com/pubnub/c-core/archive/v5.1.0.tar.gz
-        tar -xzf v5.1.0.tar.gz
-        mv c-core-5.1.0 pubnub-c-core
-        rm v5.1.0.tar.gz
+        echo "ERROR: Neither wget nor curl found. Please install one of them."
+        exit 1
     fi
     
-    echo "✓ PubNub C-Core v5.1.0 downloaded"
+    tar -xzf v5.1.1.tar.gz
+    mv c-core-5.1.1 pubnub-c-core
+    rm v5.1.1.tar.gz
+    
+    echo "✓ PubNub C-Core v5.1.1 downloaded"
     echo
 }
 
@@ -116,7 +117,7 @@ compile_program() {
 # Run the reproduction test
 run_test() {
     echo "Running the reproduction test..."
-    echo "This will attempt to reproduce the subscribe bug in v5.1.0"
+    echo "This will attempt to reproduce the subscribe bug in v5.1.1"
     echo "The program should hang at 'Step 6: Calling pubnub_subscribe...'"
     echo "Press Ctrl+C if it hangs for more than 15 seconds"
     echo
