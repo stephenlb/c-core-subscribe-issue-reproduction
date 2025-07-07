@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "pubnub_freertos_local",
-    "project_version":    "2b1be4c-dirty",
+    "project_version":    "175ed1a-dirty",
     "project_path":       "/Users/stephen/Desktop/insteon/esp_project_local",
     "idf_path":           "/Users/stephen/esp/esp-idf",
     "build_dir":          "/Users/stephen/Desktop/insteon/esp_project_local/build",
