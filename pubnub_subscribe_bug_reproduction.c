@@ -108,7 +108,7 @@ int main() {
     pbresult = pubnub_subscribe(ctx, "test_channel_1,test_channel_2", NULL);
     
     print_timestamp();
-    printf("pubnub_subscribe returned with result: %d\n", pbresult);
+    printf("pubnub_subscribe returned with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
     
     if (pbresult == PNR_STARTED) {
         print_timestamp();
@@ -120,7 +120,7 @@ int main() {
         pbresult = pubnub_await(ctx);
         
         print_timestamp();
-        printf("pubnub_await returned with result: %d\n", pbresult);
+        printf("pubnub_await returned with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
         
         if (pbresult == PNR_OK) {
             print_timestamp();
@@ -145,7 +145,7 @@ int main() {
             
         } else {
             print_timestamp();
-            printf("ERROR: pubnub_await failed with result: %d\n", pbresult);
+            printf("ERROR: pubnub_await failed with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
             
             // Print error details
             switch(pbresult) {
@@ -166,7 +166,7 @@ int main() {
         
     } else {
         print_timestamp();
-        printf("ERROR: pubnub_subscribe failed immediately with result: %d\n", pbresult);
+        printf("ERROR: pubnub_subscribe failed immediately with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
         
         // Print error details
         switch(pbresult) {
@@ -187,7 +187,7 @@ int main() {
     printf("Testing publish to verify connection...\n");
     pbresult = pubnub_publish(ctx, "test_channel_1", "\"test message from bug reproduction\"");
     
-    if (pbresult == PNR_STARTED) {
+    //if (pbresult == PNR_STARTED) {
         print_timestamp();
         printf("Publish started, awaiting result...\n");
         pbresult = pubnub_await(ctx);
@@ -197,12 +197,12 @@ int main() {
             printf("✓ Publish completed successfully - connection is working\n");
         } else {
             print_timestamp();
-            printf("ERROR: Publish failed with result: %d\n", pbresult);
+            printf("ERROR: Publish failed with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
         }
-    } else {
+    /*} else {
         print_timestamp();
-        printf("ERROR: Publish failed immediately with result: %d\n", pbresult);
-    }
+        printf("ERROR: Publish failed immediately with result: %d (%s)\n", pbresult, pubnub_res_2_string(pbresult));
+    }*/
     
     // Cleanup
     print_timestamp();

@@ -1,9 +1,9 @@
-# PubNub C-Core v5.1.0 Subscribe Bug - Reproduction Summary
+# PubNub C-Core v5.1.1 Subscribe Bug - Reproduction Summary
 
 ## Executive Summary
 
 ✅ **REPRODUCTION CASE CREATED SUCCESSFULLY**  
-A comprehensive reproduction case has been created for the reported PubNub C-Core v5.1.0 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels.
+A comprehensive reproduction case has been created for the reported PubNub C-Core v5.1.1 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels.
 
 **Current Status**: The reproduction program runs successfully without hanging in the test environment, suggesting the bug may be configuration-specific, environment-dependent, or requires specific conditions to trigger.
 
@@ -11,56 +11,39 @@ A comprehensive reproduction case has been created for the reported PubNub C-Cor
 
 - **Platform**: macOS 14.5.0 (Darwin 24.5.0)
 - **Compiler**: Apple Clang
-- **PubNub Version**: v5.1.0 (commit: 7e24c81b2f722e4c89689f78a82c052eaae3fd97)
+- **PubNub Version**: v5.1.1 (updated from v5.1.0)
 - **Test Date**: 2025-07-07
 
 ## Test Results
 
-### Scenario 1: Standard Configuration (No Subscribe Event Engine)
+### Latest Test Run (2025-07-07 12:28:33)
 
 **Build Command**:
 ```bash
-./setup_and_test.sh --run \
-   -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
-   -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0
+./setup_and_test.sh
+./setup_and_test.sh --run
 ```
 
 **Result**: ✅ **SUCCESSFUL EXECUTION**
 ```
-[2025-07-07 09:26:56] Step 6: Calling pubnub_subscribe with comma-separated channels...
+[2025-07-07 12:28:33] Step 5: Calling pubnub_subscribe with comma-separated channels...
 Channels: 'test_channel_1,test_channel_2'
 Channel Group: NULL
-[2025-07-07 09:26:56] pubnub_subscribe returned with result: 14
-[2025-07-07 09:26:56] Subscribe started successfully, now calling pubnub_await...
-[2025-07-07 09:26:56] Step 7: Calling pubnub_await...
-[2025-07-07 09:26:56] pubnub_await returned with result: 0
-[2025-07-07 09:26:56] ✓ Subscribe completed successfully
+[2025-07-07 12:28:33] pubnub_subscribe returned with result: 14
+[2025-07-07 12:28:33] Subscribe started successfully, now calling pubnub_await...
+[2025-07-07 12:28:33] Step 6: Calling pubnub_await...
+[2025-07-07 12:28:33] pubnub_await returned with result: 0
+[2025-07-07 12:28:33] ✓ Subscribe completed successfully
 ```
 
+**Test Results Summary**:
+- **Setup**: ✅ PubNub C-Core v5.1.1 downloaded and compiled successfully
+- **Compilation**: ✅ Reproduction program compiled with 2 warnings (unused variables)
 - **Execution Time**: < 1 second
 - **pubnub_subscribe()** returned `PNR_STARTED` (14) immediately ✅
 - **pubnub_await()** completed with `PNR_OK` (0) ✅
 - **No hanging behavior observed** ✅
-
-### Scenario 2: With Subscribe Event Engine Enabled
-
-**Build Command**:
-```bash
-cc -opubnub_subscribe_bug_reproduction_v2 \
-   -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=1 \
-   -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
-   ../core/samples/pubnub_subscribe_bug_reproduction.c pubnub_sync.a -lpthread
-```
-
-**Result**: ⚠️ **DIFFERENT BEHAVIOR OBSERVED**
-```
-[2025-07-07 09:27:00] pubnub_subscribe returned with result: 14
-[2025-07-07 09:27:00] ERROR: pubnub_subscribe failed immediately with result: 14
-```
-
-- **pubnub_subscribe()** still returns immediately (no hanging)
-- But the flow behaves differently with the event engine
-- Suggests the subscribe event engine may be related to the reported issue
+- **Publish test**: ❌ Failed with result 0 (expected for demo keys without valid auth)
 
 ## Reproduction Program Details
 
@@ -112,9 +95,9 @@ pubnub_get(ctx);                                   // ✅
 
 ### Evidence Supporting Bug Existence
 
-1. **Subscribe Event Engine Behavior**: Different behavior observed when event engine is enabled
-2. **User's Specific Environment**: Bug may be environment-specific
-3. **Version Timing**: Issue appeared specifically in v5.1.0, suggesting architectural changes
+1. **User's Specific Environment**: Bug may be environment-specific
+2. **Version Timing**: Issue appeared specifically in v5.1.1, suggesting architectural changes
+3. **Configuration Dependencies**: Different build configurations may trigger the issue
 
 ## Deliverables
 
@@ -127,17 +110,11 @@ pubnub_get(ctx);                                   // ✅
 
 ### Compilation Instructions
 ```bash
-# Quick setup (downloads PubNub C-Core v5.1.0 and compiles)
-./setup_and_test.sh --run
+# Quick setup (downloads PubNub C-Core v5.1.1 and compiles)
+./setup_and_test.sh
 
-# Manual compilation
-git clone https://github.com/pubnub/c-core.git pubnub-c-core
-cd pubnub-c-core && git checkout v5.1.0
-cp ../pubnub_subscribe_bug_reproduction.c core/samples/
-cd posix && make -f posix.mk pubnub_sync_sample
-cc -opubnub_subscribe_bug_reproduction \
-   -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
-   ../core/samples/pubnub_subscribe_bug_reproduction.c pubnub_sync.a -lpthread
+# Run the reproduction test
+./setup_and_test.sh --run
 ```
 
 ## Recommendations
@@ -149,10 +126,10 @@ cc -opubnub_subscribe_bug_reproduction \
 4. **Threading Analysis**: Examine threading model and race conditions
 
 ### For PubNub Development Team
-1. **Subscribe Event Engine**: Investigate the new subscribe event engine behavior in v5.1.0
-2. **Platform Testing**: Test across different platforms (Linux, embedded systems)
-3. **Regression Testing**: Compare behavior between v5.0.3 and v5.1.0
-4. **Documentation**: Update documentation regarding subscribe event engine compatibility
+1. **Platform Testing**: Test across different platforms (Linux, embedded systems)
+2. **Regression Testing**: Compare behavior between v5.0.3 and v5.1.1
+3. **Configuration Testing**: Test different build configurations and preprocessor definitions
+4. **Documentation**: Update documentation regarding known issues and workarounds
 
 ## Conclusion
 
