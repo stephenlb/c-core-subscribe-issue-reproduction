@@ -58,7 +58,7 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     print_timestamp();
-    printf("=== PubNub C-Core v5.1.0 Subscribe Bug Reproduction ===\n");
+    printf("=== PubNub C-Core v5.1.1 Subscribe Bug Reproduction ===\n");
     
     // Step 1: pubnub_alloc
     print_timestamp();
@@ -93,17 +93,29 @@ int main() {
     print_timestamp();
     printf("✓ User ID set to 'bug_reproduction_user'\n");
     
+    // Step 5: pubnub_set_auth
+    print_timestamp();
+    printf("Step 5: Setting auth key...\n");
+    pubnub_set_auth(ctx, "test_auth_key");
+    print_timestamp();
+    printf("✓ Auth key set to 'test_auth_key'\n");
+    
     // Enable trace logging to see what's happening
     print_timestamp();
     printf("Setting log level to TRACE...\n");
     pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);
+    printf("Log level set to TRACE at compile time...\n");
+    printf("Expected trace logs for pubnub_init should show only:\n");
+    printf("  - pbpal_init()\n");
+    printf("  - pbntf_setup()\n");
+    printf("If you see more logs, the environment differs from the bug report.\n");
     
-    // Step 5: pubnub_subscribe - THIS IS WHERE THE BUG OCCURS
+    // Step 6: pubnub_subscribe - THIS IS WHERE THE BUG OCCURS
     print_timestamp();
-    printf("Step 5: Calling pubnub_subscribe with comma-separated channels...\n");
+    printf("Step 6: Calling pubnub_subscribe with comma-separated channels...\n");
     printf("Channels: 'test_channel_1,test_channel_2'\n");
     printf("Channel Group: NULL\n");
-    printf("This call should return immediately but may hang in v5.1.0...\n");
+    printf("This call should return immediately but may hang in v5.1.1...\n");
     
     // Set a timeout to prevent infinite hanging
     pubnub_set_transaction_timeout(ctx, 10000); // 10 seconds
@@ -118,9 +130,9 @@ int main() {
         print_timestamp();
         printf("Subscribe started successfully, now calling pubnub_await...\n");
         
-        // Step 6: pubnub_await
+        // Step 7: pubnub_await
         print_timestamp();
-        printf("Step 6: Calling pubnub_await...\n");
+        printf("Step 7: Calling pubnub_await...\n");
         pbresult = pubnub_await(ctx);
         
         print_timestamp();
@@ -172,9 +184,9 @@ int main() {
             }
             printf("=== END SUBSCRIBE HTTP RESPONSE BODY ===\n");
             
-            // Step 7: pubnub_get
+            // Step 8: pubnub_get
             print_timestamp();
-            printf("Step 7: Retrieving messages with pubnub_get...\n");
+            printf("Step 8: Retrieving messages with pubnub_get...\n");
             message = pubnub_get(ctx);
             int message_count = 0;
             while (message != NULL) {

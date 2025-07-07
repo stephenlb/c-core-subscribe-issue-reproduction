@@ -15,7 +15,7 @@ A reproduction case has been created for the reported PubNub C-Core v5.1.1 subsc
 
 ## Test Results
 
-### Latest Test Run (2025-07-07 12:28:33)
+### Latest Test Run (2025-07-07 14:03:45)
 
 **Build Command**:
 ```bash
@@ -25,14 +25,14 @@ A reproduction case has been created for the reported PubNub C-Core v5.1.1 subsc
 
 **Result**: ✅ **SUCCESSFUL EXECUTION**
 ```
-[2025-07-07 12:28:33] Step 5: Calling pubnub_subscribe with comma-separated channels...
+[2025-07-07 14:03:45] Step 6: Calling pubnub_subscribe with comma-separated channels...
 Channels: 'test_channel_1,test_channel_2'
 Channel Group: NULL
-[2025-07-07 12:28:33] pubnub_subscribe returned with result: 14
-[2025-07-07 12:28:33] Subscribe started successfully, now calling pubnub_await...
-[2025-07-07 12:28:33] Step 6: Calling pubnub_await...
-[2025-07-07 12:28:33] pubnub_await returned with result: 0
-[2025-07-07 12:28:33] ✓ Subscribe completed successfully
+[2025-07-07 14:03:45] pubnub_subscribe returned with result: 14
+[2025-07-07 14:03:45] Subscribe started successfully, now calling pubnub_await...
+[2025-07-07 14:03:45] Step 7: Calling pubnub_await...
+[2025-07-07 14:03:45] pubnub_await returned with result: 0
+[2025-07-07 14:03:45] ✓ Subscribe completed successfully
 ```
 
 **Test Results Summary**:
@@ -42,20 +42,20 @@ Channel Group: NULL
 - **pubnub_subscribe()** returned `PNR_STARTED` (14) immediately ✅
 - **pubnub_await()** completed with `PNR_OK` (0) ✅
 - **No hanging behavior observed** ✅
-- **Publish test**: ❌ Failed with result 0 (expected for demo keys without valid auth)
+- **Publish test**: ✅ Completed successfully with connection verified
 
 ## Reproduction Program Details
 
 ### Exact API Call Sequence (Matches User Report)
 ```c
-pubnub_t *ctx = pubnub_alloc();                    // ✅
-pubnub_init(ctx, "demo", "demo");                  // ✅
-pubnub_use_http_keep_alive(ctx);                   // ✅
-pubnub_set_user_id(ctx, "bug_reproduction_user");  // ✅
-pubnub_set_auth(ctx, "test_auth_key");             // ✅
-pubnub_subscribe(ctx, "test_channel_1,test_channel_2", NULL);  // ✅
-pubnub_await(ctx);                                 // ✅
-pubnub_get(ctx);                                   // ✅
+pubnub_t *ctx = pubnub_alloc();                    // ✅ Step 1
+pubnub_init(ctx, "demo", "demo");                  // ✅ Step 2
+pubnub_use_http_keep_alive(ctx);                   // ✅ Step 3
+pubnub_set_user_id(ctx, "bug_reproduction_user");  // ✅ Step 4
+pubnub_set_auth(ctx, "test_auth_key");             // ✅ Step 5 (now included)
+pubnub_subscribe(ctx, "test_channel_1,test_channel_2", NULL);  // ✅ Step 6
+pubnub_await(ctx);                                 // ✅ Step 7
+pubnub_get(ctx);                                   // ✅ Step 8
 ```
 
 ### Key Parameters (Matches User Report)
