@@ -1,0 +1,24 @@
+read pubnub sdk docs c-core
+
+we have a new bug we need help reproducing.
+
+The recent release of c-core v5.1.0 appears to have broken pubnub_subscribe for us. The same code that was working for us on v5.0.3 no longer works on this newest version.
+More specifically, pubnub_subscribe never returns once called. We always call it with a comma separated list of 2 channels and channel_group = NULL.
+Here's the order in which we call the c-core functions leading up to the subscribe attempt:
+pubnub_alloc
+pubnub_init
+pubnub_use_http_keep_alive
+pubnub_set_user_id
+pubnub_set_auth
+pubnub_subscribe // Never returns on v5.1.0 or v5.1.1
+pubnub_await
+pubnub_get
+When PUBNUB_LOG_LEVEL is set to PUBNUB_LOG_LEVEL_TRACE, it only shows:
+pbpal_init()
+pbntf_setup()
+for the pubnub_init call.
+Also note that pubnub_publish works fine for us.
+I'm eager to update to v5.1.1 because it appears to resolve an problem we've been seeing occasionally, so hopefully we can resolve this subscribe issue soon.
+
+write code that will reproduce this issue
+include compilation instructions
