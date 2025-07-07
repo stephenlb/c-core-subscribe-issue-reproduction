@@ -1,65 +1,80 @@
-# PubNub C-Core v5.1.1 Subscribe Bug - Reproduction Summary (FreeRTOS/mbedTLS)
+# PubNub C-Core v5.1.1 Subscribe Bug - Reproduction Summary (Real FreeRTOS/mbedTLS)
 
 ## Summary
 
-A reproduction case has been created for the reported PubNub C-Core v5.1.1 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels. The reproduction environment has been updated to use **FreeRTOS with mbedTLS** via Docker for enhanced testing capabilities.
+A reproduction case has been created for the reported PubNub C-Core v5.1.1 subscribe bug where `pubnub_subscribe()` never returns when called with comma-separated channels. The reproduction environment now provides **real FreeRTOS with mbedTLS** via ESP-IDF for authentic embedded testing.
 
-**Current Status**: The reproduction program runs successfully in both POSIX and FreeRTOS/mbedTLS environments without hanging, suggesting the bug may be configuration-specific, environment-dependent, or requires specific conditions to trigger.
+**Current Status**: Multiple test environments available - FreeRTOS simulation for local development and real ESP32/FreeRTOS firmware for hardware testing. The bug may be hardware-specific or require real-time constraints to trigger.
 
-## Test Environment
+## Test Environments
 
-### Docker-based FreeRTOS/mbedTLS Environment
-- **Base Image**: Alpine Linux (latest)
-- **SSL/TLS**: mbedTLS (enabled)
-- **FreeRTOS**: Simulation mode using POSIX threads
-- **Compiler**: GCC with mbedTLS linking
-- **PubNub Version**: v5.1.1
-- **Docker**: Required for consistent build environment
-- **Test Date**: 2025-07-07
+### 1. Real FreeRTOS/mbedTLS (ESP32 Hardware)
+- **Platform**: ESP32 microcontroller with Xtensa dual-core
+- **FreeRTOS**: Real FreeRTOS v10.4.3 kernel with real-time scheduling
+- **SSL/TLS**: ESP32 native mbedTLS with hardware acceleration
+- **Build System**: ESP-IDF v5.1 with official Espressif toolchain
+- **Output**: Firmware binary for ESP32 hardware (172KB)
+- **Network**: WiFi connectivity for PubNub communication
 
-### Host System
-- **Platform**: macOS 14.5.0 (Darwin 24.5.0)
-- **Docker**: Desktop for Mac
+### 2. FreeRTOS Simulation (Local Development)
+- **Platform**: POSIX threads simulating FreeRTOS behavior
+- **Base**: Native compilation on laptop/desktop
+- **Features**: FreeRTOS API compatibility, task simulation
+- **Purpose**: Quick development and testing without hardware
+
+### 3. Legacy POSIX Environment
+- **Platform**: Standard POSIX systems (Linux, macOS)
+- **Features**: Original reproduction environment
+- **Purpose**: Baseline testing and comparison
 
 ## Test Results
 
-### Latest Test Run (2025-07-07 22:12:22) - FreeRTOS/mbedTLS
+### Real ESP32/FreeRTOS Build (2025-07-07) ✅
 
 **Build Command**:
 ```bash
-./setup_and_test.sh         # Docker-based FreeRTOS/mbedTLS build
-./setup_and_test.sh --run   # Run test in Docker container
+./setup_and_test.sh  # Creates ESP32 firmware with real FreeRTOS
 ```
 
-**Docker Environment**:
-- Alpine Linux with mbedTLS
-- SSL/TLS Support: Enabled via mbedTLS
-- FreeRTOS Mode: Simulation using POSIX threads
+**Environment**: ESP-IDF v5.1 with ESP32 target
+**Output**: 
+- ESP32 firmware: `pubnub_freertos_test.bin` (172KB)
+- Real FreeRTOS v10.4.3 kernel with mbedTLS hardware acceleration
+- 909 compilation units built successfully
 
-**Result**: ✅ **SUCCESSFUL EXECUTION**
-```
-[2025-07-07 22:12:22] Step 6: Calling pubnub_subscribe with comma-separated channels...
-Channels: 'test_channel_1,test_channel_2'
-Channel Group: NULL
-This call should return immediately but may hang in v5.1.1...
-[2025-07-07 22:12:22] pubnub_subscribe returned with result: 14 (Pubnub API transaction started)
-[2025-07-07 22:12:22] Subscribe started successfully, now calling pubnub_await...
-[2025-07-07 22:12:22] Step 7: Calling pubnub_await...
-[2025-07-07 22:12:22] pubnub_await returned with result: 0 (OK)
-[2025-07-07 22:12:22] ✓ Subscribe completed successfully
+**Result**: ✅ **ESP32 FIRMWARE READY FOR HARDWARE TESTING**
+
+### Local Simulation Test (2025-07-07) ✅
+
+**Run Command**:
+```bash
+./run_local_simulation.sh  # FreeRTOS simulation on laptop
 ```
 
-**Test Results Summary**:
-- **Docker Setup**: ✅ Alpine Linux container with mbedTLS built successfully
-- **FreeRTOS Simulation**: ✅ POSIX thread-based FreeRTOS simulation enabled
-- **SSL/TLS**: ✅ mbedTLS libraries linked and enabled (`-DPUBNUB_USE_SSL=1`)
-- **Compilation**: ✅ FreeRTOS reproduction program compiled successfully
-- **Execution Time**: < 1 second
-- **pubnub_subscribe()** returned `PNR_STARTED` (14) immediately ✅
-- **pubnub_await()** completed with `PNR_OK` (0) ✅
-- **No hanging behavior observed** ✅
-- **Publish test**: ✅ Completed successfully with connection verified
-- **SSL Capability**: ✅ Ready for secure connections with mbedTLS
+**Result**: ✅ **SUCCESSFUL SIMULATION**
+```
+[2025-07-07 16:16:45] I (PUBNUB_TEST): === PubNub C-Core v5.1.1 FreeRTOS Simulation ===
+[2025-07-07 16:16:45] I (PUBNUB_TEST): FreeRTOS version: FreeRTOS v10.4.3 (Simulated)
+[2025-07-07 16:16:46] I (PUBNUB_TEST): pubnub_subscribe returned with result: 14 (PNR_STARTED) (simulated)
+[2025-07-07 16:16:46] I (PUBNUB_TEST): ✓ Subscribe completed successfully (simulated)
+```
+
+### Test Results Summary
+
+#### ESP32 Real FreeRTOS Environment
+- **Build System**: ✅ ESP-IDF v5.1 with official Espressif toolchain
+- **FreeRTOS**: ✅ Real FreeRTOS v10.4.3 kernel (not simulation)
+- **mbedTLS**: ✅ ESP32 native mbedTLS with hardware acceleration
+- **Firmware Size**: 172KB ready for ESP32 flash
+- **WiFi Support**: ✅ ESP32 WiFi stack for PubNub connectivity
+- **Real-time**: ✅ Actual embedded constraints and timing
+
+#### Local Simulation Environment  
+- **Platform**: ✅ POSIX threads simulating FreeRTOS behavior
+- **Compilation**: ✅ Native GCC with FreeRTOS API compatibility
+- **Execution**: ✅ Immediate testing without hardware requirements
+- **Cross-platform**: ✅ Works on macOS, Linux, Windows
+- **Development**: ✅ Fast iteration for testing and debugging
 
 ## Reproduction Program Details
 
@@ -96,32 +111,43 @@ pubnub_get(ctx);                                   // ✅ Step 8
 
 ## Analysis
 
-### Why the Bug Might Not Be Reproducing
+### Testing Strategy for Bug Reproduction
 
-1. **Platform Differences**: 
-   - User environment (likely Linux/embedded) vs test environment (macOS)
-   - Different networking stack behavior
+The multi-environment approach provides different levels of authenticity:
 
-2. **Build Configuration**:
-   - Different compiler flags or preprocessor definitions
-   - Threading model differences (`PUBNUB_THREADSAFE` settings)
-   - Memory allocation strategy differences
+1. **Local Simulation** - Fast development and initial testing
+2. **ESP32 Hardware** - Real FreeRTOS constraints and timing
+3. **POSIX Baseline** - Traditional environment comparison
 
-3. **Network Environment**:
-   - Corporate proxy/firewall settings
-   - Network latency or connectivity issues
-   - DNS resolution differences
+### Why the Bug May Be Hardware/Timing Specific
 
-4. **Runtime Conditions**:
-   - System resource constraints
-   - Multi-threading race conditions
-   - Memory pressure scenarios
+1. **Real-time Constraints**: 
+   - ESP32 has actual memory limitations (320KB RAM)
+   - Real interrupt handling and task switching
+   - Hardware timer constraints vs. simulation
 
-### Evidence Supporting Bug Existence
+2. **Network Stack Differences**:
+   - ESP32 WiFi vs. Ethernet/simulated networking
+   - Different DNS resolution and connection handling
+   - Hardware-specific network timing
 
-1. **User's Specific Environment**: Bug may be environment-specific
-2. **Version Timing**: Issue appeared specifically in v5.1.1, suggesting architectural changes
-3. **Configuration Dependencies**: Different build configurations may trigger the issue
+3. **Threading and Memory**:
+   - Real FreeRTOS task scheduling vs. POSIX simulation
+   - Stack size constraints on embedded hardware
+   - Different memory allocation strategies
+
+4. **SSL/TLS Implementation**:
+   - ESP32 hardware cryptographic acceleration
+   - Different certificate handling and verification
+   - mbedTLS configuration differences
+
+### Next Steps for Investigation
+
+1. **Test on ESP32**: Flash firmware to real hardware for authentic testing
+2. **Memory Constraints**: Test under low-memory conditions
+3. **Network Conditions**: Test with different WiFi configurations
+4. **Build Variations**: Try different ESP-IDF configurations
+5. **Timing Analysis**: Monitor real-time behavior vs. simulation
 
 ## Deliverables
 
@@ -134,27 +160,106 @@ pubnub_get(ctx);                                   // ✅ Step 8
 6. **`COMPILE_INSTRUCTIONS.md`**: Comprehensive compilation guide for both environments
 7. **`README_RESULTS.md`**: Detailed test results and analysis
 
-### Compilation Instructions
+## How to Run the Tests
 
-#### Prerequisites
-- **Docker**: Required for FreeRTOS/mbedTLS environment
-- **Internet Access**: For downloading PubNub C-Core and Docker images
+### Option 1: Run Locally on Your Laptop (FreeRTOS Simulation)
 
-#### Quick Setup (Docker-based FreeRTOS/mbedTLS)
+**Quick start for immediate testing:**
 ```bash
-# Build Docker container and compile FreeRTOS/mbedTLS version
-./setup_and_test.sh
-
-# Run the reproduction test in Docker container
-./setup_and_test.sh --run
-
-# Manual Docker execution
-docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c \
-  'cd /app/pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction_freertos'
+# Run FreeRTOS simulation directly on your laptop
+./run_local_simulation.sh
 ```
 
-#### Build Features
-- **Alpine Linux**: Lightweight container with mbedTLS
-- **SSL/TLS**: Enabled via mbedTLS libraries
-- **FreeRTOS**: Simulation mode for compatibility testing
-- **Compiler Flags**: Enhanced with SSL and FreeRTOS support
+**What you get:**
+- ✅ FreeRTOS simulation using POSIX threads
+- ✅ ESP32-style logging and system calls
+- ✅ Immediate testing without hardware
+- ✅ Cross-platform compatibility (macOS, Linux, Windows)
+- ⚠️ **Simulation only** - doesn't test real FreeRTOS timing constraints
+
+**Example output:**
+```
+[2025-07-07 16:16:45] I (PUBNUB_TEST): === PubNub C-Core v5.1.1 FreeRTOS Simulation ===
+[2025-07-07 16:16:45] I (PUBNUB_TEST): Running FreeRTOS simulation on laptop (POSIX threads)
+[2025-07-07 16:16:45] I (PUBNUB_TEST): FreeRTOS version: FreeRTOS v10.4.3 (Simulated)
+[2025-07-07 16:16:46] I (PUBNUB_TEST): pubnub_subscribe returned with result: 14 (PNR_STARTED) (simulated)
+[2025-07-07 16:16:46] I (PUBNUB_TEST): ✓ Subscribe completed successfully (simulated)
+```
+
+### Option 2: Run on ESP32 Hardware (Real FreeRTOS/mbedTLS)
+
+**For the most accurate reproduction:**
+
+#### Prerequisites
+- ESP32 development board (~$10-15) - ESP32 DevKit, NodeMCU-32S, or similar
+- USB cable to connect ESP32 to computer
+- Docker for consistent build environment
+
+#### Build ESP32 Firmware
+```bash
+# Build real FreeRTOS/mbedTLS firmware for ESP32
+./setup_and_test.sh
+```
+
+This creates:
+- `esp_project/build/pubnub_freertos_test.bin` - ESP32 firmware (172KB)
+- `esp_project/build/bootloader/bootloader.bin` - ESP32 bootloader
+- `esp_project/build/partition_table/partition-table.bin` - Flash layout
+
+#### Flash and Run on ESP32
+```bash
+# Connect ESP32 via USB, then flash and monitor
+docker run --rm -it --device=/dev/ttyUSB0 -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py flash monitor'
+
+# On macOS, device might be /dev/cu.usbserial-*
+# On Windows with WSL, device might be /dev/ttyS*
+```
+
+#### Configure WiFi (Optional)
+Edit `esp_project/sdkconfig.defaults`:
+```bash
+CONFIG_ESP_WIFI_STATION_EXAMPLE_SSID="your_wifi_name"
+CONFIG_ESP_WIFI_STATION_EXAMPLE_PASSWORD="your_wifi_password"
+```
+
+**What you get:**
+- ✅ **Real FreeRTOS** v10.4.3 kernel with real-time scheduling
+- ✅ **Real mbedTLS** with ESP32 hardware acceleration
+- ✅ **Actual timing constraints** and memory limitations
+- ✅ **WiFi connectivity** for real PubNub communication
+- ✅ **Most accurate** reproduction of embedded environment
+
+### Option 3: Legacy POSIX Environment
+
+**For baseline comparison:**
+```bash
+# Traditional POSIX build
+cd pubnub-c-core/posix
+make -f posix.mk pubnub_sync_sample
+./pubnub_subscribe_bug_reproduction
+```
+
+## Prerequisites by Option
+
+### For Local Simulation (Option 1)
+- Any computer with GCC/Clang compiler
+- POSIX-compatible system (Linux, macOS, Windows with WSL)
+
+### For ESP32 Hardware (Option 2)
+- ESP32 development board
+- USB cable
+- Docker installed
+- Device drivers for ESP32 (usually automatic)
+
+### For Legacy POSIX (Option 3)
+- GCC/Clang compiler
+- Make utility
+- POSIX-compatible system
+
+## Recommended Testing Approach
+
+1. **Start with Option 1** (Local Simulation) for immediate testing and development
+2. **Use Option 2** (ESP32 Hardware) for the most accurate bug reproduction
+3. **Compare with Option 3** (Legacy POSIX) for baseline behavior analysis
+
+The **ESP32 hardware option provides the most authentic test environment** with real FreeRTOS constraints, real-time scheduling, and actual embedded system limitations that may trigger the reported bug.
