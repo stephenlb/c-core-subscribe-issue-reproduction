@@ -33,12 +33,14 @@ check_dependencies() {
 
 # Download PubNub C-Core
 download_pubnub() {
-    echo "Downloading PubNub C-Core v5.1.1..."
-    
     if [ -d "pubnub-c-core" ]; then
-        echo "pubnub-c-core directory already exists. Removing..."
-        rm -rf pubnub-c-core
+        echo "PubNub C-Core directory already exists. Skipping download..."
+        echo "✓ Using existing PubNub C-Core v5.1.1"
+        echo
+        return 0
     fi
+    
+    echo "Downloading PubNub C-Core v5.1.1..."
     
     echo "Downloading tarball..."
     if command -v wget &> /dev/null; then
@@ -93,6 +95,7 @@ compile_program() {
        -D PUBNUB_ONLY_PUBSUB_API=0 \
        -D PUBNUB_PROXY_API=1 \
        -D PUBNUB_RECEIVE_GZIP_RESPONSE=1 \
+       -D PUBNUB_BLOCKING_IO_SETTABLE=0 \
        -D PUBNUB_THREADSAFE=1 \
        -D PUBNUB_USE_ACTIONS_API=1 \
        -D PUBNUB_USE_ADVANCED_HISTORY=1 \

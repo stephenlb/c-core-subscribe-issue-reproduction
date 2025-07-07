@@ -136,7 +136,37 @@ int main() {
             pubnub_chamebl_t response_body;
             int result = pubnub_last_http_response_body(ctx, &response_body);
             if (result == 0 && response_body.ptr != NULL) {
-                printf("Response body: %.*s\n", (int)response_body.size, response_body.ptr);
+                printf("Response buffer size: %zu bytes\n", response_body.size);
+                printf("Response body (raw with NULL handling): ");
+                for (size_t i = 0; i < response_body.size; i++) {
+                    char c = response_body.ptr[i];
+                    if (c == '\0') {
+                        printf("\\0");  // Show NULL as literal \0
+                    } else if (c == '\n') {
+                        printf("\\n");
+                    } else if (c == '\r') {
+                        printf("\\r");
+                    } else if (c == '\t') {
+                        printf("\\t");
+                    } else if (c >= 32 && c <= 126) {
+                        printf("%c", c);  // Printable ASCII
+                    } else {
+                        printf("\\x%02x", (unsigned char)c);  // Non-printable as hex
+                    }
+                }
+                printf("\n");
+                // Also try to reconstruct as proper JSON by replacing NULLs with spaces
+                printf("Response body (JSON-like): ");
+                for (size_t i = 0; i < response_body.size; i++) {
+                    char c = response_body.ptr[i];
+                    if (c == '\0') {
+                        // Skip NULL characters entirely
+                        continue;
+                    } else {
+                        printf("%c", c);
+                    }
+                }
+                printf("\n");
             } else {
                 printf("No response body available (result: %d)\n", result);
             }
@@ -218,7 +248,37 @@ int main() {
             pubnub_chamebl_t response_body;
             int result = pubnub_last_http_response_body(ctx, &response_body);
             if (result == 0 && response_body.ptr != NULL) {
-                printf("Response body: %.*s\n", (int)response_body.size, response_body.ptr);
+                printf("Response buffer size: %zu bytes\n", response_body.size);
+                printf("Response body (raw with NULL handling): ");
+                for (size_t i = 0; i < response_body.size; i++) {
+                    char c = response_body.ptr[i];
+                    if (c == '\0') {
+                        printf("\\0");  // Show NULL as literal \0
+                    } else if (c == '\n') {
+                        printf("\\n");
+                    } else if (c == '\r') {
+                        printf("\\r");
+                    } else if (c == '\t') {
+                        printf("\\t");
+                    } else if (c >= 32 && c <= 126) {
+                        printf("%c", c);  // Printable ASCII
+                    } else {
+                        printf("\\x%02x", (unsigned char)c);  // Non-printable as hex
+                    }
+                }
+                printf("\n");
+                // Also try to reconstruct as proper JSON by replacing NULLs with spaces
+                printf("Response body (JSON-like): ");
+                for (size_t i = 0; i < response_body.size; i++) {
+                    char c = response_body.ptr[i];
+                    if (c == '\0') {
+                        // Skip NULL characters entirely
+                        continue;
+                    } else {
+                        printf("%c", c);
+                    }
+                }
+                printf("\n");
             } else {
                 printf("No response body available (result: %d)\n", result);
             }
