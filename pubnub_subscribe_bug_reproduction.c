@@ -19,7 +19,8 @@
 #include "pubnub-c-core/core/pubnub_log.h"
 
 // For HTTP response access
-#include "pubnub-c-core/core/pubnub_coreapi.h"
+#include "pubnub_coreapi.h"
+#include "pubnub_memory_block.h"
 
 // Global variables for signal handling
 static volatile int should_exit = 0;
@@ -132,11 +133,12 @@ int main() {
             // Print full HTTP response body from subscribe
             print_timestamp();
             printf("=== SUBSCRIBE HTTP RESPONSE BODY ===\n");
-            const char *response_body = pubnub_get_http_content(ctx);
-            if (response_body != NULL) {
-                printf("Response body: %s\n", response_body);
+            pubnub_chamebl_t response_body;
+            int result = pubnub_last_http_response_body(ctx, &response_body);
+            if (result == 0 && response_body.ptr != NULL) {
+                printf("Response body: %.*s\n", (int)response_body.size, response_body.ptr);
             } else {
-                printf("No response body available\n");
+                printf("No response body available (result: %d)\n", result);
             }
             printf("=== END SUBSCRIBE HTTP RESPONSE BODY ===\n");
             
@@ -213,11 +215,12 @@ int main() {
             // Print full HTTP response body from publish
             print_timestamp();
             printf("=== PUBLISH HTTP RESPONSE BODY ===\n");
-            const char *response_body = pubnub_get_http_content(ctx);
-            if (response_body != NULL) {
-                printf("Response body: %s\n", response_body);
+            pubnub_chamebl_t response_body;
+            int result = pubnub_last_http_response_body(ctx, &response_body);
+            if (result == 0 && response_body.ptr != NULL) {
+                printf("Response body: %.*s\n", (int)response_body.size, response_body.ptr);
             } else {
-                printf("No response body available\n");
+                printf("No response body available (result: %d)\n", result);
             }
             printf("=== END PUBLISH HTTP RESPONSE BODY ===\n");
         } else {

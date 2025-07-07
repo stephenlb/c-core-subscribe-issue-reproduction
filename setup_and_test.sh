@@ -72,6 +72,8 @@ compile_program() {
     sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
     sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
     sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|#include "pubnub_coreapi.h"|#include "../core/pubnub_coreapi.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|#include "pubnub_memory_block.h"|#include "../core/pubnub_memory_block.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
     
     # Fix the log level setting function call
     echo "Fixing log level function call..."
