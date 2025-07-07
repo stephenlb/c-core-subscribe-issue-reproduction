@@ -68,34 +68,82 @@ compile_program() {
     
     echo "Compiling the reproduction program with FreeRTOS/mbedTLS..."
     
-    # Copy the reproduction file and update it for FreeRTOS
-    echo "Preparing reproduction file for FreeRTOS build..."
-    cp pubnub_subscribe_bug_reproduction.c pubnub_subscribe_bug_reproduction_freertos.c
-    
-    # Fix the includes for FreeRTOS platform
-    echo "Updating includes for FreeRTOS platform..."
-    sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "freertos/pubnub_sync.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|#include "pubnub_coreapi.h"|#include "core/pubnub_coreapi.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|#include "pubnub_memory_block.h"|#include "core/pubnub_memory_block.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-    
-    # Add FreeRTOS includes
-    sed -i '' '1i\
+    # Check if we already have a properly prepared FreeRTOS file
+    if [ -f "pubnub_subscribe_bug_reproduction_freertos.c" ] && grep -q "freertos/FreeRTOS.h" pubnub_subscribe_bug_reproduction_freertos.c; then
+        echo "Using existing FreeRTOS reproduction file with simulation support..."
+    else
+        echo "Preparing reproduction file for FreeRTOS build..."
+        # Only create the FreeRTOS file if it doesn't exist or needs updating
+        if [ ! -f "pubnub_subscribe_bug_reproduction_freertos.c" ]; then
+            echo "Creating FreeRTOS reproduction file from POSIX version..."
+            cp pubnub_subscribe_bug_reproduction.c pubnub_subscribe_bug_reproduction_freertos.c
+        fi
+        
+        # Fix the includes for FreeRTOS platform
+        echo "Updating includes for FreeRTOS platform..."
+        sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "freertos/pubnub_sync.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|#include "pubnub_coreapi.h"|#include "core/pubnub_coreapi.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|#include "pubnub_memory_block.h"|#include "core/pubnub_memory_block.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+        
+        # Add FreeRTOS includes only if not already present
+        if ! grep -q "freertos/FreeRTOS.h" pubnub_subscribe_bug_reproduction_freertos.c; then
+            sed -i '' '1i\
 #include "freertos/FreeRTOS.h"\
 #include "freertos/task.h"\
 #include "freertos/semphr.h"\
 ' pubnub_subscribe_bug_reproduction_freertos.c
-    
-    # Fix the log level setting function call
-    echo "Fixing log level function call..."
-    sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub_subscribe_bug_reproduction_freertos.c
-    sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub_subscribe_bug_reproduction_freertos.c
+        fi
+        
+        # Fix the log level setting function call
+        echo "Fixing log level function call..."
+        sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub_subscribe_bug_reproduction_freertos.c
+        sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub_subscribe_bug_reproduction_freertos.c
+    fi
     
     # Build in Docker container
     echo "Building PubNub library with FreeRTOS/mbedTLS in Docker container..."
-    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls /app/build_freertos_mbedtls.sh
+    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c "
+        echo '=== Building PubNub C-Core with FreeRTOS/mbedTLS ==='
+        cd /app/pubnub-c-core/posix
+
+        echo 'Cleaning and building PubNub library...'
+        make -f posix.mk clean
+        make -f posix.mk pubnub_sync_sample
+
+        echo 'Compiling FreeRTOS reproduction program with mbedTLS...'
+        gcc -o pubnub_subscribe_bug_reproduction_freertos \\
+            -I.. -I. -I../lib/base64 -I../posix -I../core \\
+            -DPUBNUB_CRYPTO_API=0 \\
+            -DPUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \\
+            -DPUBNUB_ONLY_PUBSUB_API=0 \\
+            -DPUBNUB_PROXY_API=1 \\
+            -DPUBNUB_RECEIVE_GZIP_RESPONSE=1 \\
+            -DPUBNUB_THREADSAFE=1 \\
+            -DPUBNUB_USE_ACTIONS_API=1 \\
+            -DPUBNUB_USE_ADVANCED_HISTORY=1 \\
+            -DPUBNUB_USE_AUTO_HEARTBEAT=1 \\
+            -DPUBNUB_USE_FETCH_HISTORY=1 \\
+            -DPUBNUB_USE_GRANT_TOKEN_API=0 \\
+            -DPUBNUB_USE_GZIP_COMPRESSION=1 \\
+            -DPUBNUB_USE_IPV6=0 \\
+            -DPUBNUB_USE_OBJECTS_API=1 \\
+            -DPUBNUB_USE_RETRY_CONFIGURATION=0 \\
+            -DPUBNUB_USE_REVOKE_TOKEN_API=0 \\
+            -DPUBNUB_USE_SSL=1 \\
+            -DPUBNUB_BLOCKING_IO_SETTABLE=0 \\
+            -DPUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \\
+            -DPUBNUB_USE_SUBSCRIBE_V2=1 \\
+            -DPUBNUB_USE_LOG_CALLBACK=0 \\
+            -DFREERTOS_SIMULATION=1 \\
+            /app/pubnub_subscribe_bug_reproduction_freertos.c \\
+            pubnub_sync.a -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
+
+        echo '✓ FreeRTOS reproduction program compiled successfully'
+        echo '✓ Build completed successfully'
+    "
     
     echo "✓ Program compiled successfully with FreeRTOS/mbedTLS"
     echo

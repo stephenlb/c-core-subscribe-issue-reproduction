@@ -1,15 +1,12 @@
-// FreeRTOS simulation - using POSIX headers for compatibility
 #ifdef FREERTOS_SIMULATION
 #include <pthread.h>
-#define FREERTOS_H
-// Mock FreeRTOS types for build compatibility
 typedef struct { int dummy; } TaskHandle_t;
-typedef struct { int dummy; } SemaphoreHandle_t;
 #else
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +15,8 @@ typedef struct { int dummy; } SemaphoreHandle_t;
 #include <errno.h>
 #include <time.h>
 
-// Include the PubNub sync header - using POSIX for FreeRTOS simulation
-#include "pubnub_sync.h"
+// Include the PubNub sync header - adjust path for root directory build
+#include "freertos/pubnub_sync.h"
 
 // For HTTP keep-alive
 #include "core/pubnub_helper.h"
