@@ -1,11 +1,25 @@
-# PubNub C-Core Subscribe Bug Reproduction - Compilation Instructions (FreeRTOS/mbedTLS)
+# PubNub C-Core Subscribe Bug Reproduction - Compilation Instructions (Real FreeRTOS/mbedTLS)
 
 ## Prerequisites
 
-### For Docker-based FreeRTOS/mbedTLS Build (Recommended)
+### For Real ESP32/FreeRTOS Build (Recommended)
+#### Option A: Docker-based ESP-IDF
 1. **Docker**: Docker Desktop or Docker Engine
-2. **Internet Access**: For downloading PubNub C-Core and Docker images
-3. **PubNub C-Core SDK**: Version 5.1.1 (automatically downloaded)
+2. **ESP32 Hardware**: ESP32 development board for flashing firmware
+3. **USB Cable**: To connect ESP32 to computer
+4. **Internet Access**: For downloading ESP-IDF and PubNub C-Core
+
+#### Option B: Local ESP-IDF Installation
+1. **ESP-IDF**: v5.1.4 (installed via setup script)
+2. **ESP32 Hardware**: ESP32 development board
+3. **USB Cable**: To connect ESP32 to computer
+4. **Disk Space**: ~2GB for ESP-IDF installation
+5. **Python 3**: Required by ESP-IDF (usually pre-installed)
+
+### For FreeRTOS Simulation (Local Testing)
+1. **C Compiler**: GCC or Clang
+2. **POSIX System**: Linux, macOS, or Windows with WSL
+3. **pthread Support**: For FreeRTOS simulation
 
 ### For Legacy POSIX Build
 1. **C Compiler**: GCC or Clang
@@ -14,36 +28,77 @@
 
 ## Quick Setup
 
-### Option 1: Docker-based FreeRTOS/mbedTLS Build (Recommended)
+### Option 1: Local FreeRTOS Simulation (Immediate Testing)
 
-This approach uses Docker to create a consistent Alpine Linux environment with mbedTLS and FreeRTOS simulation.
+**Quick start for immediate testing without hardware:**
+```bash
+# Run FreeRTOS simulation directly on your laptop
+./run_local_simulation.sh
+```
 
-1. **Build and test automatically**:
+**Features**:
+- ✅ FreeRTOS simulation using POSIX threads
+- ✅ ESP32-style logging and system calls
+- ✅ Immediate testing without hardware
+- ✅ Cross-platform compatibility (macOS, Linux, Windows)
+- ⚠️ **Simulation only** - doesn't test real FreeRTOS timing constraints
+
+### Option 2A: Real ESP32/FreeRTOS (Docker-based)
+
+This approach uses Docker with ESP-IDF to create real ESP32 firmware with authentic FreeRTOS.
+
+1. **Build ESP32 firmware automatically**:
    ```bash
-   # Downloads PubNub C-Core v5.1.1, builds Docker container, and compiles
+   # Downloads PubNub C-Core v5.1.1, builds ESP32 firmware
    ./setup_and_test.sh
-   
-   # Run the FreeRTOS/mbedTLS reproduction test
-   ./setup_and_test.sh --run
    ```
 
-2. **Manual Docker execution**:
+2. **Flash to ESP32 hardware**:
    ```bash
-   # Build Docker image
-   docker build -t pubnub-freertos-mbedtls .
-   
-   # Run the test
-   docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c \
-     'cd /app/pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction_freertos'
+   # Connect ESP32 via USB first, then flash
+   docker run --rm -it --device=/dev/ttyUSB0 -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py flash monitor'
    ```
 
 **Features**:
-- **SSL/TLS Support**: Enabled via mbedTLS libraries
-- **FreeRTOS Simulation**: POSIX thread-based compatibility
-- **Alpine Linux**: Lightweight container environment
-- **Consistent Build**: Same environment across all platforms
+- ✅ **Real FreeRTOS** v10.4.3 kernel with real-time scheduling
+- ✅ **Real mbedTLS** with ESP32 hardware acceleration
+- ✅ **Actual timing constraints** and memory limitations
+- ✅ **Consistent build environment** across platforms
+- ✅ **ESP32 firmware** ready for hardware testing
 
-### Option 2: Using the Provided Makefile (Legacy POSIX)
+### Option 2B: Real ESP32/FreeRTOS (Local ESP-IDF)
+
+**For native ESP32 development with full toolchain access:**
+
+1. **One-time setup** (installs ESP-IDF locally):
+   ```bash
+   ./setup_local_esp_idf.sh
+   ```
+
+2. **Build ESP32 firmware**:
+   ```bash
+   ./run_local_esp_idf.sh
+   ```
+
+3. **Flash to ESP32 hardware**:
+   ```bash
+   cd esp_project_local
+   idf.py flash monitor
+   
+   # Or specify port manually
+   idf.py -p /dev/cu.usbserial-* flash monitor    # macOS
+   idf.py -p /dev/ttyUSB0 flash monitor           # Linux  
+   idf.py -p COM* flash monitor                   # Windows
+   ```
+
+**Features**:
+- ✅ **Native ESP-IDF** v5.1.4 installation
+- ✅ **Direct access** to ESP-IDF tools and debugging
+- ✅ **IDE integration** (VS Code, CLion)
+- ✅ **Native idf.py** commands
+- ✅ **Professional ESP32 development** environment
+
+### Option 3: Using the Provided Makefile (Legacy POSIX)
 
 1. **Download PubNub C-Core**:
    ```bash
@@ -66,7 +121,7 @@ This approach uses Docker to create a consistent Alpine Linux environment with m
    ./pubnub_subscribe_bug_reproduction
    ```
 
-### Option 3: Manual Compilation (Legacy POSIX)
+### Option 4: Manual Compilation (Legacy POSIX)
 
 If you prefer to compile manually or the Makefile doesn't work for your system:
 
@@ -96,7 +151,7 @@ If you prefer to compile manually or the Makefile doesn't work for your system:
        -lpthread
    ```
 
-### Option 4: Using PubNub's Build System (Legacy POSIX)
+### Option 5: Using PubNub's Build System (Legacy POSIX)
 
 If you have the PubNub C-Core source and want to use their build system:
 
@@ -118,12 +173,19 @@ If you have the PubNub C-Core source and want to use their build system:
 
 ## Compilation Flags Explanation
 
-### FreeRTOS/mbedTLS Build Flags (Docker)
-- `-DPUBNUB_USE_SSL=1`: Enable SSL/TLS support
+### ESP32/FreeRTOS Build (ESP-IDF)
+**ESP-IDF automatically handles compilation with these features:**
+- **Real FreeRTOS**: v10.4.3 kernel with real-time scheduling
+- **mbedTLS**: Hardware-accelerated SSL/TLS support
+- **WiFi Stack**: ESP32 native WiFi for PubNub connectivity
+- **Xtensa Architecture**: Dual-core ESP32 processor support
+- **CMake Build System**: Official Espressif toolchain
+
+### FreeRTOS Simulation Build Flags (Local)
 - `-DFREERTOS_SIMULATION=1`: Enable FreeRTOS simulation mode
-- `-lmbedtls -lmbedx509 -lmbedcrypto`: Link with mbedTLS libraries
-- `-DPUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE`: Enable trace logging
 - `-lpthread`: POSIX threads for FreeRTOS simulation
+- `-I local_simulation`: Include simulation headers
+- **FreeRTOS API Compatibility**: Mock FreeRTOS functions using POSIX
 
 ### Legacy POSIX Build Flags
 - `-std=c99`: Use C99 standard
@@ -134,16 +196,34 @@ If you have the PubNub C-Core source and want to use their build system:
 
 ## Testing Different Environments
 
-### FreeRTOS/mbedTLS Environment (Docker)
-The Docker-based approach automatically uses PubNub C-Core v5.1.1 with FreeRTOS simulation and mbedTLS:
+### Real ESP32/FreeRTOS Environment
 
+#### Docker-based ESP-IDF
 ```bash
-# Test FreeRTOS/mbedTLS environment
-./setup_and_test.sh --run
+# Build ESP32 firmware
+./setup_and_test.sh
 
-# Or manually with Docker
-docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c \
-  'cd /app/pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction_freertos'
+# Flash to ESP32 (connect ESP32 via USB first)
+docker run --rm -it --device=/dev/ttyUSB0 -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py flash monitor'
+```
+
+#### Local ESP-IDF
+```bash
+# Setup ESP-IDF locally (one-time)
+./setup_local_esp_idf.sh
+
+# Build ESP32 firmware
+./run_local_esp_idf.sh
+
+# Flash to ESP32
+cd esp_project_local
+idf.py flash monitor
+```
+
+### FreeRTOS Simulation Environment
+```bash
+# Test FreeRTOS simulation on laptop
+./run_local_simulation.sh
 ```
 
 ### Testing Different Versions (Legacy POSIX)
@@ -185,13 +265,21 @@ To test the bug across different versions:
 
 ## Expected Behavior
 
-### FreeRTOS/mbedTLS Environment (Docker)
+### Real ESP32/FreeRTOS Environment
+**Current Status**: ESP32 firmware builds successfully
+- **Build Output**: `pubnub_freertos_test.bin` (172KB firmware)
+- **Real FreeRTOS**: v10.4.3 kernel with real-time scheduling
+- **Hardware acceleration**: ESP32 mbedTLS with crypto acceleration
+- **WiFi connectivity**: ESP32 WiFi stack for PubNub communication
+- **Flash target**: Ready for ESP32 hardware testing
+
+### FreeRTOS Simulation Environment (Local)
 **Current Status**: Working correctly (no hanging observed)
-- `pubnub_subscribe()` returns `PNR_STARTED` (14) immediately
-- `pubnub_await()` completes with `PNR_OK` (0)
-- SSL/TLS capabilities available via mbedTLS
+- `pubnub_subscribe()` returns `PNR_STARTED` (14) immediately (simulated)
+- `pubnub_await()` completes with `PNR_OK` (0) (simulated)
+- FreeRTOS API compatibility via POSIX threads
 - Program finishes within 1 second
-- Both subscribe and publish operations work
+- Cross-platform laptop testing
 
 ### Working Version (v5.0.3 - Legacy POSIX)
 - `pubnub_subscribe()` should return `PNR_STARTED` immediately
@@ -206,25 +294,77 @@ To test the bug across different versions:
 
 ## Debugging Tips
 
-### FreeRTOS/mbedTLS Debug (Docker)
-1. **Enable verbose logging**: The program sets `PUBNUB_LOG_LEVEL_TRACE` by default
+### Real ESP32/FreeRTOS Debug
 
-2. **Access Docker container for debugging**:
+#### Docker-based ESP-IDF Debugging
+1. **Interactive ESP-IDF shell**:
    ```bash
-   # Interactive shell in container
+   # Access ESP-IDF container
    docker run --rm -it -v "$(pwd):/app" pubnub-freertos-mbedtls sh
    
-   # Check mbedTLS libraries
-   ldd /app/pubnub-c-core/posix/pubnub_subscribe_bug_reproduction_freertos
+   # Check ESP-IDF environment
+   idf.py --version
    
-   # Check SSL/TLS configuration
-   grep -r "mbedtls" /app/pubnub-c-core/
+   # Monitor ESP32 output
+   idf.py monitor
    ```
 
-3. **Docker build debugging**:
+2. **ESP32 build debugging**:
    ```bash
-   # Rebuild Docker image with verbose output
-   docker build --no-cache -t pubnub-freertos-mbedtls .
+   # Verbose build
+   docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py build -v'
+   ```
+
+#### Local ESP-IDF Debugging
+1. **ESP-IDF environment setup**:
+   ```bash
+   # Source ESP-IDF environment
+   source $HOME/esp/esp-idf/export.sh
+   
+   # Check ESP-IDF tools
+   idf.py --version
+   esptool.py version
+   ```
+
+2. **ESP32 flashing and monitoring**:
+   ```bash
+   cd esp_project_local
+   
+   # List available ports
+   idf.py list-targets
+   
+   # Flash with verbose output
+   idf.py -v flash
+   
+   # Monitor serial output
+   idf.py monitor
+   
+   # Flash and monitor together
+   idf.py flash monitor
+   ```
+
+3. **Port detection issues**:
+   ```bash
+   # macOS - find USB serial ports
+   ls /dev/cu.usbserial-*
+   
+   # Linux - find USB serial ports
+   ls /dev/ttyUSB*
+   
+   # Windows - COM ports
+   # Use Device Manager or: mode
+   ```
+
+### FreeRTOS Simulation Debug (Local)
+1. **Simulation debugging**:
+   ```bash
+   # Run with GDB
+   cd local_simulation
+   gdb ./freertos_simulation
+   (gdb) run
+   
+   # Check simulation headers
+   cat local_simulation/freertos/FreeRTOS.h
    ```
 
 ### Legacy POSIX Debug
@@ -272,11 +412,22 @@ export PUBNUB_ORIGIN=ps.pndsn.com  # Use different origin
 
 ### Platform-Specific Notes
 
+#### ESP32 Hardware Requirements
+- **ESP32 Board**: ESP32 DevKit, NodeMCU-32S, or similar (~$10-15)
+- **USB Cable**: Usually USB-A to micro-USB or USB-C
+- **Drivers**: Usually automatic, may need CP210x or FTDI drivers
+
 #### Docker Environment (All Platforms)
 - **macOS**: Docker Desktop for Mac required
 - **Linux**: Docker Engine or Docker Desktop
 - **Windows**: Docker Desktop for Windows (WSL2 recommended)
-- **Container**: Alpine Linux with mbedTLS (platform-independent)
+- **Container**: ESP-IDF with real FreeRTOS support
+
+#### Local ESP-IDF Environment
+- **macOS**: Native ESP-IDF installation via install.sh
+- **Linux**: Native ESP-IDF installation via install.sh
+- **Windows**: ESP-IDF can be installed but Docker recommended
+- **Disk Space**: ~2GB for full ESP-IDF installation
 
 #### Legacy POSIX Environment
 - **macOS**: May need to install Xcode command line tools
@@ -303,22 +454,30 @@ make clean
 rm -rf pubnub-c-core*
 ```
 
-## Docker Environment Details
+## ESP-IDF Environment Details
 
-### Container Specifications
-- **Base Image**: Alpine Linux (latest)
-- **SSL/TLS Library**: mbedTLS 3.6.x
-- **FreeRTOS**: Simulation using POSIX threads
-- **Compiler**: GCC with Alpine Linux
-- **Size**: ~321 MiB (includes development tools)
+### Docker Container Specifications
+- **Base Image**: espressif/idf:release-v5.1
+- **ESP-IDF Version**: v5.1
+- **FreeRTOS**: Real FreeRTOS v10.4.3 kernel
+- **SSL/TLS Library**: ESP32 native mbedTLS with hardware acceleration
+- **Target**: ESP32 with Xtensa dual-core processor
+- **WiFi**: ESP32 WiFi stack for PubNub connectivity
+
+### Local ESP-IDF Specifications
+- **ESP-IDF Version**: v5.1.4 (latest stable)
+- **Installation Path**: `~/esp/esp-idf/`
+- **Python Environment**: ESP-IDF managed Python virtual environment
+- **Toolchain**: Official Espressif Xtensa toolchain
+- **Size**: ~2GB (includes toolchain, Python packages, documentation)
 
 ### Build Process
-1. Downloads Alpine Linux base image
-2. Installs build tools and mbedTLS development libraries
-3. Copies project files into container
-4. Creates build script for FreeRTOS/mbedTLS compilation
-5. Downloads PubNub C-Core v5.1.1 during build
-6. Compiles with SSL/TLS and FreeRTOS simulation enabled
+1. **Docker**: Uses official ESP-IDF container with all tools pre-installed
+2. **Local**: Downloads and installs ESP-IDF v5.1.4 to user home directory
+3. **Project Creation**: Creates ESP-IDF project structure with CMakeLists.txt
+4. **Target Configuration**: Sets ESP32 as target platform
+5. **Firmware Build**: Creates real ESP32 firmware binary
+6. **Flash Ready**: Generates bootloader, partition table, and application binary
 
 ### Security Notes
 - Container runs as root (standard for build containers)
