@@ -85,6 +85,14 @@ compile_program() {
     # Build using PubNub's build system
     echo "Building PubNub library..."
     cd pubnub-c-core/posix
+
+    ## Remove the old pubnub_subscribe_bug_reproduction if it exists and silently continue if it doesn't
+    rm -f pubnub_subscribe_bug_reproduction
+
+    ## Make clean before building
+    make -f posix.mk clean
+
+    ## Build the PubNub library
     make -f posix.mk pubnub_sync_sample
     
     echo "Compiling reproduction program..."
@@ -95,7 +103,6 @@ compile_program() {
        -D PUBNUB_ONLY_PUBSUB_API=0 \
        -D PUBNUB_PROXY_API=1 \
        -D PUBNUB_RECEIVE_GZIP_RESPONSE=1 \
-       -D PUBNUB_BLOCKING_IO_SETTABLE=0 \
        -D PUBNUB_THREADSAFE=1 \
        -D PUBNUB_USE_ACTIONS_API=1 \
        -D PUBNUB_USE_ADVANCED_HISTORY=1 \
@@ -103,11 +110,12 @@ compile_program() {
        -D PUBNUB_USE_FETCH_HISTORY=1 \
        -D PUBNUB_USE_GRANT_TOKEN_API=0 \
        -D PUBNUB_USE_GZIP_COMPRESSION=1 \
-       -D PUBNUB_USE_IPV6=1 \
+       -D PUBNUB_USE_IPV6=0 \
        -D PUBNUB_USE_OBJECTS_API=1 \
        -D PUBNUB_USE_RETRY_CONFIGURATION=0 \
        -D PUBNUB_USE_REVOKE_TOKEN_API=0 \
        -D PUBNUB_USE_SSL=0 \
+       -D PUBNUB_BLOCKING_IO_SETTABLE=0 \
        -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \
        -D PUBNUB_USE_SUBSCRIBE_V2=1 \
        -D PUBNUB_USE_LOG_CALLBACK=0 \
