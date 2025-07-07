@@ -58,7 +58,7 @@ download_pubnub() {
 
 # Build Docker image and compile the reproduction program
 compile_program() {
-    echo "Building Docker image for FreeRTOS/mbedTLS environment..."
+    echo "Building Docker image for Real FreeRTOS/mbedTLS environment (ESP-IDF)..."
     
     # Build Docker image
     docker build -t pubnub-freertos-mbedtls .
@@ -66,110 +66,39 @@ compile_program() {
     echo "✓ Docker image built successfully"
     echo
     
-    echo "Compiling the reproduction program with FreeRTOS/mbedTLS..."
+    echo "Creating ESP-IDF project with Real FreeRTOS/mbedTLS..."
     
-    # Check if we already have a properly prepared FreeRTOS file
-    if [ -f "pubnub_subscribe_bug_reproduction_freertos.c" ] && grep -q "freertos/FreeRTOS.h" pubnub_subscribe_bug_reproduction_freertos.c; then
-        echo "Using existing FreeRTOS reproduction file with simulation support..."
-    else
-        echo "Preparing reproduction file for FreeRTOS build..."
-        # Only create the FreeRTOS file if it doesn't exist or needs updating
-        if [ ! -f "pubnub_subscribe_bug_reproduction_freertos.c" ]; then
-            echo "Creating FreeRTOS reproduction file from POSIX version..."
-            cp pubnub_subscribe_bug_reproduction.c pubnub_subscribe_bug_reproduction_freertos.c
-        fi
-        
-        # Fix the includes for FreeRTOS platform
-        echo "Updating includes for FreeRTOS platform..."
-        sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "freertos/pubnub_sync.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|#include "pubnub_coreapi.h"|#include "core/pubnub_coreapi.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|#include "pubnub_memory_block.h"|#include "core/pubnub_memory_block.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
-        
-        # Add FreeRTOS includes only if not already present
-        if ! grep -q "freertos/FreeRTOS.h" pubnub_subscribe_bug_reproduction_freertos.c; then
-            sed -i '' '1i\
-#include "freertos/FreeRTOS.h"\
-#include "freertos/task.h"\
-#include "freertos/semphr.h"\
-' pubnub_subscribe_bug_reproduction_freertos.c
-        fi
-        
-        # Fix the log level setting function call
-        echo "Fixing log level function call..."
-        sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub_subscribe_bug_reproduction_freertos.c
-        sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub_subscribe_bug_reproduction_freertos.c
-    fi
+    # Build ESP-IDF project in Docker container
+    echo "Building ESP-IDF project with Real FreeRTOS and mbedTLS..."
+    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls /app/build_real_freertos.sh
     
-    # Build in Docker container
-    echo "Building PubNub library with FreeRTOS/mbedTLS in Docker container..."
-    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c "
-        echo '=== Building PubNub C-Core with FreeRTOS/mbedTLS ==='
-        cd /app/pubnub-c-core/posix
-
-        echo 'Cleaning and building PubNub library...'
-        make -f posix.mk clean
-        make -f posix.mk pubnub_sync_sample
-
-        echo 'Compiling FreeRTOS reproduction program with mbedTLS...'
-        gcc -o pubnub_subscribe_bug_reproduction_freertos \\
-            -I.. -I. -I../lib/base64 -I../posix -I../core \\
-            -DPUBNUB_CRYPTO_API=0 \\
-            -DPUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \\
-            -DPUBNUB_ONLY_PUBSUB_API=0 \\
-            -DPUBNUB_PROXY_API=1 \\
-            -DPUBNUB_RECEIVE_GZIP_RESPONSE=1 \\
-            -DPUBNUB_THREADSAFE=1 \\
-            -DPUBNUB_USE_ACTIONS_API=1 \\
-            -DPUBNUB_USE_ADVANCED_HISTORY=1 \\
-            -DPUBNUB_USE_AUTO_HEARTBEAT=1 \\
-            -DPUBNUB_USE_FETCH_HISTORY=1 \\
-            -DPUBNUB_USE_GRANT_TOKEN_API=0 \\
-            -DPUBNUB_USE_GZIP_COMPRESSION=1 \\
-            -DPUBNUB_USE_IPV6=0 \\
-            -DPUBNUB_USE_OBJECTS_API=1 \\
-            -DPUBNUB_USE_RETRY_CONFIGURATION=0 \\
-            -DPUBNUB_USE_REVOKE_TOKEN_API=0 \\
-            -DPUBNUB_USE_SSL=1 \\
-            -DPUBNUB_BLOCKING_IO_SETTABLE=0 \\
-            -DPUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \\
-            -DPUBNUB_USE_SUBSCRIBE_V2=1 \\
-            -DPUBNUB_USE_LOG_CALLBACK=0 \\
-            -DFREERTOS_SIMULATION=1 \\
-            /app/pubnub_subscribe_bug_reproduction_freertos.c \\
-            pubnub_sync.a -lmbedtls -lmbedx509 -lmbedcrypto -lpthread
-
-        echo '✓ FreeRTOS reproduction program compiled successfully'
-        echo '✓ Build completed successfully'
-    "
-    
-    echo "✓ Program compiled successfully with FreeRTOS/mbedTLS"
+    echo "✓ Real FreeRTOS project built successfully"
     echo
 }
 
 # Run the reproduction test
 run_test() {
-    echo "Running the reproduction test with FreeRTOS/mbedTLS..."
-    echo "This will attempt to reproduce the subscribe bug in v5.1.1 using FreeRTOS/mbedTLS"
-    echo "The program should hang at 'Step 6: Calling pubnub_subscribe...'"
-    echo "Press Ctrl+C if it hangs for more than 15 seconds"
+    echo "Real FreeRTOS/mbedTLS ESP-IDF project has been built successfully!"
     echo
-    echo "Starting test in 3 seconds..."
-    sleep 3
-    
-    # Run the test in Docker container
-    echo "Running test in Docker container..."
-    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c "
-        if [ -f '/app/pubnub-c-core/posix/pubnub_subscribe_bug_reproduction_freertos' ]; then
-            cd /app/pubnub-c-core/posix
-            ./pubnub_subscribe_bug_reproduction_freertos
-        else
-            echo 'ERROR: FreeRTOS reproduction program not found. Compilation may have failed.'
-            exit 1
-        fi
-    "
+    echo "The ESP-IDF project creates firmware that runs on ESP32 hardware with:"
+    echo "- ✓ Real FreeRTOS kernel (not simulation)"
+    echo "- ✓ mbedTLS for SSL/TLS support"
+    echo "- ✓ WiFi connectivity for PubNub communication"
+    echo "- ✓ PubNub C-Core v5.1.1 bug reproduction test"
+    echo
+    echo "To run this on actual ESP32 hardware:"
+    echo "1. Connect ESP32 device via USB"
+    echo "2. Configure WiFi credentials in esp_project/sdkconfig.defaults"
+    echo "3. Flash and monitor:"
+    echo "   docker run --rm -it --device=/dev/ttyUSB0 -v \"\$(pwd):/app\" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py flash monitor'"
+    echo
+    echo "Build artifacts:"
+    echo "- Firmware binary: esp_project/build/pubnub_freertos_test.bin"
+    echo "- Bootloader: esp_project/build/bootloader/bootloader.bin"
+    echo "- Partition table: esp_project/build/partition_table/partition-table.bin"
+    echo
+    echo "The real FreeRTOS environment will test the same bug reproduction scenario"
+    echo "but running on actual FreeRTOS with real-time constraints and ESP32 hardware."
 }
 
 # Main execution
@@ -180,10 +109,12 @@ main() {
     
     echo "Setup completed successfully!"
     echo
-    echo "To run the reproduction test:"
-    echo "  docker run --rm -v \"$(pwd):/app\" pubnub-freertos-mbedtls sh -c 'cd /app/pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction_freertos'"
+    echo "Real FreeRTOS/mbedTLS ESP-IDF project ready!"
     echo
-    echo "To run with the setup script:"
+    echo "To flash to ESP32 hardware:"
+    echo "  docker run --rm -it --device=/dev/ttyUSB0 -v \"$(pwd):/app\" pubnub-freertos-mbedtls sh -c 'cd /app/esp_project && idf.py flash monitor'"
+    echo
+    echo "To view project details:"
     echo "  $0 --run"
     echo
     
@@ -196,20 +127,24 @@ main() {
 # Parse command line arguments
 case "${1:-}" in
     --run)
-        if [ ! -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction_freertos" ]; then
-            echo "Program not found. Running full setup first..."
+        if [ ! -d "esp_project" ]; then
+            echo "ESP-IDF project not found. Running full setup first..."
             main --run
         else
             run_test
         fi
         ;;
     --help)
-        echo "PubNub C-Core Subscribe Bug Reproduction Setup Script"
+        echo "PubNub C-Core Subscribe Bug Reproduction Setup Script (Real FreeRTOS/mbedTLS)"
         echo
         echo "Usage:"
-        echo "  $0              # Download and compile only"
-        echo "  $0 --run        # Download, compile, and run test"
+        echo "  $0              # Download and compile ESP-IDF project"
+        echo "  $0 --run        # Download, compile, and show flash instructions"
         echo "  $0 --help       # Show this help message"
+        echo
+        echo "This script creates a real FreeRTOS/mbedTLS environment using ESP-IDF"
+        echo "for ESP32 hardware. The output is firmware that can be flashed to"
+        echo "an actual ESP32 device for testing the PubNub subscribe bug."
         echo
         exit 0
         ;;
