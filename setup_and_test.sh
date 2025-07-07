@@ -1,24 +1,20 @@
 #!/bin/bash
 
-# PubNub C-Core Subscribe Bug Reproduction Setup Script
-# This script downloads PubNub C-Core and compiles the reproduction case
+# PubNub C-Core Subscribe Bug Reproduction Setup Script (FreeRTOS/mbedTLS)
+# This script downloads PubNub C-Core and compiles the reproduction case using Docker
 
 set -e  # Exit on any error
 
-echo "=== PubNub C-Core Subscribe Bug Reproduction Setup ==="
+echo "=== PubNub C-Core Subscribe Bug Reproduction Setup (FreeRTOS/mbedTLS) ==="
 echo
 
 # Check if we have the necessary tools
 check_dependencies() {
     echo "Checking dependencies..."
     
-    if ! command -v gcc &> /dev/null; then
-        echo "ERROR: gcc not found. Please install a C compiler."
-        exit 1
-    fi
-    
-    if ! command -v make &> /dev/null; then
-        echo "ERROR: make not found. Please install GNU Make."
+    if ! command -v docker &> /dev/null; then
+        echo "ERROR: Docker not found. Please install Docker to build with FreeRTOS/mbedTLS."
+        echo "Visit https://docs.docker.com/get-docker/ for installation instructions."
         exit 1
     fi
     
@@ -27,7 +23,7 @@ check_dependencies() {
         exit 1
     fi
     
-    echo "✓ Dependencies check passed"
+    echo "✓ Dependencies check passed (Docker available)"
     echo
 }
 
@@ -60,91 +56,72 @@ download_pubnub() {
     echo
 }
 
-# Compile the reproduction program
+# Build Docker image and compile the reproduction program
 compile_program() {
-    echo "Compiling the reproduction program..."
+    echo "Building Docker image for FreeRTOS/mbedTLS environment..."
     
-    # Copy the reproduction file to the samples directory with correct includes
-    echo "Copying reproduction file to PubNub samples directory..."
-    cp pubnub_subscribe_bug_reproduction.c pubnub-c-core/core/samples/
+    # Build Docker image
+    docker build -t pubnub-freertos-mbedtls .
     
-    # Fix the includes for the samples directory structure
-    echo "Fixing include paths for samples directory..."
-    sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "pubnub_sync.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|#include "pubnub_coreapi.h"|#include "../core/pubnub_coreapi.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|#include "pubnub_memory_block.h"|#include "../core/pubnub_memory_block.h"|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    echo "✓ Docker image built successfully"
+    echo
+    
+    echo "Compiling the reproduction program with FreeRTOS/mbedTLS..."
+    
+    # Copy the reproduction file and update it for FreeRTOS
+    echo "Preparing reproduction file for FreeRTOS build..."
+    cp pubnub_subscribe_bug_reproduction.c pubnub_subscribe_bug_reproduction_freertos.c
+    
+    # Fix the includes for FreeRTOS platform
+    echo "Updating includes for FreeRTOS platform..."
+    sed -i '' 's|#include "pubnub-c-core/posix/pubnub_sync.h"|#include "freertos/pubnub_sync.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_helper.h"|#include "core/pubnub_helper.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_timers.h"|#include "core/pubnub_timers.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|#include "pubnub-c-core/core/pubnub_log.h"|#include "core/pubnub_log.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|#include "pubnub_coreapi.h"|#include "core/pubnub_coreapi.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|#include "pubnub_memory_block.h"|#include "core/pubnub_memory_block.h"|g' pubnub_subscribe_bug_reproduction_freertos.c
+    
+    # Add FreeRTOS includes
+    sed -i '' '1i\
+#include "freertos/FreeRTOS.h"\
+#include "freertos/task.h"\
+#include "freertos/semphr.h"\
+' pubnub_subscribe_bug_reproduction_freertos.c
     
     # Fix the log level setting function call
     echo "Fixing log level function call..."
-    sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
-    sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub-c-core/core/samples/pubnub_subscribe_bug_reproduction.c
+    sed -i '' 's|pubnub_set_log_level(PUBNUB_LOG_LEVEL_TRACE);|printf("Log level set to TRACE at compile time...\\n");|g' pubnub_subscribe_bug_reproduction_freertos.c
+    sed -i '' 's|printf("Setting log level to TRACE...");|printf("Log level set to TRACE at compile time...");|g' pubnub_subscribe_bug_reproduction_freertos.c
     
-    # Build using PubNub's build system
-    echo "Building PubNub library..."
-    cd pubnub-c-core/posix
-
-    ## Remove the old pubnub_subscribe_bug_reproduction if it exists and silently continue if it doesn't
-    rm -f pubnub_subscribe_bug_reproduction
-
-    ## Make clean before building
-    make -f posix.mk clean
-
-    ## Build the PubNub library
-    make -f posix.mk pubnub_sync_sample
+    # Build in Docker container
+    echo "Building PubNub library with FreeRTOS/mbedTLS in Docker container..."
+    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls /app/build_freertos_mbedtls.sh
     
-    echo "Compiling reproduction program..."
-    cc -opubnub_subscribe_bug_reproduction -Wall \
-       -I.. -I. -I../lib/base64 -I../posix \
-       -D PUBNUB_CRYPTO_API=0 \
-       -D PUBNUB_LOG_LEVEL=PUBNUB_LOG_LEVEL_TRACE \
-       -D PUBNUB_ONLY_PUBSUB_API=0 \
-       -D PUBNUB_PROXY_API=1 \
-       -D PUBNUB_RECEIVE_GZIP_RESPONSE=1 \
-       -D PUBNUB_THREADSAFE=1 \
-       -D PUBNUB_USE_ACTIONS_API=1 \
-       -D PUBNUB_USE_ADVANCED_HISTORY=1 \
-       -D PUBNUB_USE_AUTO_HEARTBEAT=1 \
-       -D PUBNUB_USE_FETCH_HISTORY=1 \
-       -D PUBNUB_USE_GRANT_TOKEN_API=0 \
-       -D PUBNUB_USE_GZIP_COMPRESSION=1 \
-       -D PUBNUB_USE_IPV6=0 \
-       -D PUBNUB_USE_OBJECTS_API=1 \
-       -D PUBNUB_USE_RETRY_CONFIGURATION=0 \
-       -D PUBNUB_USE_REVOKE_TOKEN_API=0 \
-       -D PUBNUB_USE_SSL=0 \
-       -D PUBNUB_BLOCKING_IO_SETTABLE=0 \
-       -D PUBNUB_USE_SUBSCRIBE_EVENT_ENGINE=0 \
-       -D PUBNUB_USE_SUBSCRIBE_V2=1 \
-       -D PUBNUB_USE_LOG_CALLBACK=0 \
-       ../core/samples/pubnub_subscribe_bug_reproduction.c pubnub_sync.a -lpthread
-       
-    cd ../..
-    
-    echo "✓ Program compiled successfully"
+    echo "✓ Program compiled successfully with FreeRTOS/mbedTLS"
     echo
 }
 
 # Run the reproduction test
 run_test() {
-    echo "Running the reproduction test..."
-    echo "This will attempt to reproduce the subscribe bug in v5.1.1"
+    echo "Running the reproduction test with FreeRTOS/mbedTLS..."
+    echo "This will attempt to reproduce the subscribe bug in v5.1.1 using FreeRTOS/mbedTLS"
     echo "The program should hang at 'Step 6: Calling pubnub_subscribe...'"
     echo "Press Ctrl+C if it hangs for more than 15 seconds"
     echo
     echo "Starting test in 3 seconds..."
     sleep 3
     
-    if [ -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction" ]; then
-        cd pubnub-c-core/posix
-        ./pubnub_subscribe_bug_reproduction
-        cd ../..
-    else
-        echo "ERROR: Reproduction program not found. Compilation may have failed."
-        exit 1
-    fi
+    # Run the test in Docker container
+    echo "Running test in Docker container..."
+    docker run --rm -v "$(pwd):/app" pubnub-freertos-mbedtls sh -c "
+        if [ -f '/app/pubnub-c-core/posix/pubnub_subscribe_bug_reproduction_freertos' ]; then
+            cd /app/pubnub-c-core/posix
+            ./pubnub_subscribe_bug_reproduction_freertos
+        else
+            echo 'ERROR: FreeRTOS reproduction program not found. Compilation may have failed.'
+            exit 1
+        fi
+    "
 }
 
 # Main execution
@@ -156,7 +133,7 @@ main() {
     echo "Setup completed successfully!"
     echo
     echo "To run the reproduction test:"
-    echo "  cd pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction"
+    echo "  docker run --rm -v \"$(pwd):/app\" pubnub-freertos-mbedtls sh -c 'cd /app/pubnub-c-core/posix && ./pubnub_subscribe_bug_reproduction_freertos'"
     echo
     echo "To run with the setup script:"
     echo "  $0 --run"
@@ -171,7 +148,7 @@ main() {
 # Parse command line arguments
 case "${1:-}" in
     --run)
-        if [ ! -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction" ]; then
+        if [ ! -f "pubnub-c-core/posix/pubnub_subscribe_bug_reproduction_freertos" ]; then
             echo "Program not found. Running full setup first..."
             main --run
         else
