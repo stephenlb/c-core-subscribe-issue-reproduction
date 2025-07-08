@@ -1,0 +1,100 @@
+Starting QEMU ESP32 simulation...
+Press Ctrl+C to exit
+
+Creating proper flash image for QEMU...
+Adding SPI flash device
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:7112
+load:0x40078000,len:15624
+load:0x40080400,len:4
+load:0x40080404,len:3876
+entry 0x4008064c
+I (725) boot: ESP-IDF v5.1.4 2nd stage bootloader
+I (726) boot: compile time Jul  7 2025 16:40:32
+I (726) boot: Multicore bootloader
+I (746) boot: chip revision: v0.0
+I (749) boot.esp32: SPI Speed      : 40MHz
+I (749) boot.esp32: SPI Mode       : DIO
+I (749) boot.esp32: SPI Flash Size : 2MB
+I (758) boot: Enabling RNG early entropy source...
+I (770) boot: Partition Table:
+I (770) boot: ## Label            Usage          Type ST Offset   Length
+I (770) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (771) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (771) boot:  2 factory          factory app      00 00 00010000 00100000
+I (777) boot: End of partition table
+I (784) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=0a278h ( 41592) map
+I (811) esp_image: segment 1: paddr=0001a2a0 vaddr=3ffb0000 size=02200h (  8704) load
+I (827) esp_image: segment 2: paddr=0001c4a8 vaddr=40080000 size=03b70h ( 15216) load
+I (852) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=168b8h ( 92344) map
+I (881) esp_image: segment 4: paddr=000368e0 vaddr=40083b70 size=08e58h ( 36440) load
+I (902) boot: Loaded app from partition at offset 0x10000
+I (902) boot: Disabling RNG early entropy source...
+I (912) cpu_start: Multicore app
+I (915) cpu_start: Pro cpu up.
+I (916) cpu_start: Starting app cpu, entry point is 0x40081204
+I (558) cpu_start: App cpu up.
+I (1511) cpu_start: Pro cpu start user code
+I (1511) cpu_start: cpu freq: 160000000 Hz
+I (1512) cpu_start: Application information:
+I (1512) cpu_start: Project name:     pubnub_freertos_local
+I (1512) cpu_start: App version:      175ed1a-dirty
+I (1513) cpu_start: Compile time:     Jul  7 2025 16:50:03
+I (1513) cpu_start: ELF file SHA256:  15ac851d72d6032a...
+I (1514) cpu_start: ESP-IDF:          v5.1.4
+I (1514) cpu_start: Min chip rev:     v0.0
+I (1514) cpu_start: Max chip rev:     v3.99
+I (1515) cpu_start: Chip rev:         v0.0
+I (1516) heap_init: Initializing. RAM available for dynamic allocation:
+I (1517) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (1518) heap_init: At 3FFB2AB0 len 0002D550 (181 KiB): DRAM
+I (1518) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (1518) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (1519) heap_init: At 4008C9C8 len 00013638 (77 KiB): IRAM
+I (1550) spi_flash: detected chip: gd
+I (1555) spi_flash: flash io: dio
+W (1560) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (1566) app_start: Starting scheduler on CPU0
+I (1569) app_start: Starting scheduler on CPU1
+I (1569) main_task: Started on CPU0
+I (1579) main_task: Calling app_main()
+I (1669) PUBNUB_TEST: Starting Real FreeRTOS test...
+I (1669) PUBNUB_TEST: === PubNub C-Core v5.1.1 Real FreeRTOS Test (Local ESP-IDF) ===
+I (1669) PUBNUB_TEST: Running on ESP32 with Real FreeRTOS and mbedTLS
+I (1669) PUBNUB_TEST: FreeRTOS version: V10.4.3
+I (1669) PUBNUB_TEST: Free heap: 291124 bytes
+I (1669) PUBNUB_TEST: ✓ Real FreeRTOS environment ready for PubNub C-Core testing
+I (1669) PUBNUB_TEST: Step 1: Would allocate PubNub context...
+I (1669) main_task: Returned from app_main()
+I (1769) PUBNUB_TEST: ✓ PubNub context allocated successfully
+I (1769) PUBNUB_TEST: Step 2: Would initialize PubNub context...
+I (1869) PUBNUB_TEST: ✓ PubNub context initialized with demo keys
+I (1869) PUBNUB_TEST: Step 3: Would enable HTTP keep-alive...
+I (1969) PUBNUB_TEST: ✓ HTTP keep-alive enabled
+I (1969) PUBNUB_TEST: Step 4: Would set user ID...
+I (2069) PUBNUB_TEST: ✓ User ID set to 'bug_reproduction_user'
+I (2069) PUBNUB_TEST: Step 5: Would set auth key...
+I (2169) PUBNUB_TEST: ✓ Auth key set to 'test_auth_key'
+I (2169) PUBNUB_TEST: Step 6: Would call pubnub_subscribe with comma-separated channels...
+I (2169) PUBNUB_TEST: Channels: 'test_channel_1,test_channel_2'
+I (2169) PUBNUB_TEST: Channel Group: NULL
+I (2169) PUBNUB_TEST: This call should return immediately but may hang in v5.1.1...
+I (2369) PUBNUB_TEST: pubnub_subscribe returned with result: 14 (PNR_STARTED)
+I (2369) PUBNUB_TEST: Subscribe started successfully, now calling pubnub_await...
+I (2369) PUBNUB_TEST: Step 7: Would call pubnub_await...
+I (2869) PUBNUB_TEST: pubnub_await returned with result: 0 (PNR_OK)
+I (2869) PUBNUB_TEST: ✓ Subscribe completed successfully
+I (2869) PUBNUB_TEST: ✓ Bug reproduction test completed
+I (2869) PUBNUB_TEST:
+I (2869) PUBNUB_TEST: NOTE: This is a basic test. For full PubNub integration,
+I (2869) PUBNUB_TEST: add PubNub C-Core as a component to this ESP-IDF project.
+I (2869) PUBNUB_TEST: FreeRTOS task running - heap: 295568 bytes
+I (7869) PUBNUB_TEST: FreeRTOS task running - heap: 295568 bytes
+qemu-system-xtensa: terminating on signal 2 from pid 96640 (<unknown process>)
+
+✓ QEMU simulation ended
